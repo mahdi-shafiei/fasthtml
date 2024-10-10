@@ -2,6 +2,70 @@
 
 <!-- do not remove -->
 
+## 0.6.10
+
+### New Features
+
+- Document usage with Jupyter ([#469](https://github.com/AnswerDotAI/fasthtml/issues/469))
+
+
+## 0.6.9
+
+### New Features
+
+- Add `oauth.redir_url` function ([#476](https://github.com/AnswerDotAI/fasthtml/issues/476))
+
+
+## 0.6.8
+
+### New Features
+
+- Allow for handler names with same name as an http verb, even if path not provided ([#459](https://github.com/AnswerDotAI/fasthtml/issues/459))
+- Support explicit iframe height in Jupyter HTMX ([#458](https://github.com/AnswerDotAI/fasthtml/pull/458)), thanks to [@callmephilip](https://github.com/callmephilip)
+- Improve type annotations for element attributes ([#453](https://github.com/AnswerDotAI/fasthtml/pull/453)), thanks to [@callmephilip](https://github.com/callmephilip)
+- Make compatible w/ ddtrace ([#452](https://github.com/AnswerDotAI/fasthtml/pull/452)), thanks to [@derekgliwa](https://github.com/derekgliwa)
+
+
+## 0.6.7
+
+### Bugs Squashed
+
+- Remove IPython dep ([#456](https://github.com/AnswerDotAI/fasthtml/issues/456))
+
+
+## 0.6.6
+
+### New Features
+
+- Add `def_hdrs` ([#446](https://github.com/AnswerDotAI/fasthtml/issues/446))
+
+
+## 0.6.5
+
+### New Features
+
+- Jupyter compatibility ([#445](https://github.com/AnswerDotAI/fasthtml/issues/445))
+- Redefining a route overwrites existing definition (e.g for use in notebooks) ([#444](https://github.com/AnswerDotAI/fasthtml/issues/444))
+
+### Bugs Squashed
+
+- [BUG] d argument is not passed in Path function for SVGs ([#437](https://github.com/AnswerDotAI/fasthtml/issues/437))
+
+
+## 0.6.4
+
+### New Features
+
+- Pass query params to custom class annotated args ([#439](https://github.com/AnswerDotAI/fasthtml/issues/439))
+
+
+## 0.6.3
+
+### Bugs Squashed
+
+- `svg.Path` not passing `d` param ([#438](https://github.com/AnswerDotAI/fasthtml/issues/438))
+
+
 ## 0.6.2
 
 ### New Features

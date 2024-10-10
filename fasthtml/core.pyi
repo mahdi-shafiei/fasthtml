@@ -1,5 +1,5 @@
 """The `FastHTML` subclass of `Starlette`, along with the `RouterX` and `RouteX` classes it automatically uses."""
-__all__ = ['empty', 'htmx_hdrs', 'fh_cfg', 'htmx_resps', 'htmxsrc', 'htmxwssrc', 'fhjsscr', 'htmxctsrc', 'surrsrc', 'scopesrc', 'viewport', 'charset', 'all_meths', 'parsed_date', 'snake2hyphens', 'HtmxHeaders', 'str2int', 'str2date', 'HttpHeader', 'HtmxResponseHeaders', 'form2dict', 'parse_form', 'flat_xt', 'Beforeware', 'EventStream', 'signal_shutdown', 'WS_RouteX', 'uri', 'decode_uri', 'flat_tuple', 'Redirect', 'RouteX', 'RouterX', 'get_key', 'FastHTML', 'serve', 'Client', 'cookie', 'reg_re_param', 'MiddlewareBase', 'FtResponse']
+__all__ = ['empty', 'htmx_hdrs', 'fh_cfg', 'htmx_resps', 'htmxsrc', 'htmxwssrc', 'fhjsscr', 'htmxctsrc', 'surrsrc', 'scopesrc', 'viewport', 'charset', 'all_meths', 'parsed_date', 'snake2hyphens', 'HtmxHeaders', 'str2int', 'str2date', 'HttpHeader', 'HtmxResponseHeaders', 'form2dict', 'parse_form', 'flat_xt', 'Beforeware', 'EventStream', 'signal_shutdown', 'WS_RouteX', 'uri', 'decode_uri', 'flat_tuple', 'Redirect', 'RouteX', 'RouterX', 'get_key', 'def_hdrs', 'FastHTML', 'serve', 'Client', 'cookie', 'reg_re_param', 'MiddlewareBase', 'FtResponse']
 import json, uuid, inspect, types, uvicorn, signal, asyncio, threading
 from fastcore.utils import *
 from fastcore.xml import *
@@ -220,6 +220,9 @@ class RouterX(Router):
     def __init__(self, app, routes=None, redirect_slashes=True, default=None, *, middleware=None):
         ...
 
+    def _add_route(self, route):
+        ...
+
     def add_route(self, path: str, endpoint: callable, methods=None, name=None, include_in_schema=True):
         ...
 
@@ -227,7 +230,7 @@ class RouterX(Router):
         ...
 htmxsrc = Script(src='https://unpkg.com/htmx.org@next/dist/htmx.min.js')
 htmxwssrc = Script(src='https://unpkg.com/htmx-ext-ws/ws.js')
-fhjsscr = Script(src='https://cdn.jsdelivr.net/gh/answerdotai/fasthtml-js@main/fasthtml.js')
+fhjsscr = Script(src='https://cdn.jsdelivr.net/gh/answerdotai/fasthtml-js@1.0.4/fasthtml.js')
 htmxctsrc = Script(src='https://unpkg.com/htmx-ext-transfer-encoding-chunked/transfer-encoding-chunked.js')
 surrsrc = Script(src='https://cdn.jsdelivr.net/gh/answerdotai/surreal@main/surreal.js')
 scopesrc = Script(src='https://cdn.jsdelivr.net/gh/gnat/css-scope-inline@main/script.js')
@@ -244,6 +247,10 @@ def _wrap_ex(f, hdrs, ftrs, htmlkw, bodykw):
     ...
 
 def _mk_locfunc(f, p):
+    ...
+
+def def_hdrs(htmx=True, ct_hdr=False, ws_hdr=False, surreal=True):
+    """Default headers for a FastHTML app"""
     ...
 
 class FastHTML(Starlette):

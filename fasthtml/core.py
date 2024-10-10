@@ -4,10 +4,10 @@
 
 # %% auto 0
 __all__ = ['empty', 'htmx_hdrs', 'fh_cfg', 'htmx_resps', 'htmxsrc', 'htmxwssrc', 'fhjsscr', 'htmxctsrc', 'surrsrc', 'scopesrc',
-           'viewport', 'charset', 'all_meths', 'parsed_date', 'snake2hyphens', 'HtmxHeaders', 'str2int', 'str2date',
-           'HttpHeader', 'HtmxResponseHeaders', 'form2dict', 'parse_form', 'flat_xt', 'Beforeware', 'EventStream',
-           'signal_shutdown', 'WS_RouteX', 'uri', 'decode_uri', 'flat_tuple', 'Redirect', 'RouteX', 'RouterX',
-           'get_key', 'FastHTML', 'serve', 'Client', 'cookie', 'reg_re_param', 'MiddlewareBase', 'FtResponse']
+           'viewport', 'charset', 'all_meths', 'parsed_date', 'snake2hyphens', 'HtmxHeaders', 'HttpHeader',
+           'HtmxResponseHeaders', 'form2dict', 'parse_form', 'flat_xt', 'Beforeware', 'EventStream', 'signal_shutdown',
+           'WS_RouteX', 'uri', 'decode_uri', 'flat_tuple', 'Redirect', 'RouteX', 'RouterX', 'get_key', 'def_hdrs',
+           'FastHTML', 'serve', 'Client', 'cookie', 'reg_re_param', 'MiddlewareBase', 'FtResponse']
 
 # %% ../nbs/api/00_core.ipynb
 import json,uuid,inspect,types,uvicorn,signal,asyncio,threading
@@ -71,23 +71,10 @@ def _get_htmx(h):
     return HtmxHeaders(**res)
 
 # %% ../nbs/api/00_core.ipynb
-def str2int(s)->int:
-    "Convert `s` to an `int`"
-    s = s.lower()
-    if s=='on': return 1
-    if s=='none': return 0
-    return 0 if not s else int(s)
-
-# %% ../nbs/api/00_core.ipynb
 def _mk_list(t, v): return [t(o) for o in v]
 
 # %% ../nbs/api/00_core.ipynb
 fh_cfg = AttrDict(indent=True)
-
-# %% ../nbs/api/00_core.ipynb
-def str2date(s:str)->date:
-    "`date.fromisoformat` with empty string handling"
-    return date.fromisoformat(s) if s else None
 
 # %% ../nbs/api/00_core.ipynb
 def _fix_anno(t):
@@ -95,7 +82,7 @@ def _fix_anno(t):
     origin = get_origin(t)
     if origin is Union or origin is UnionType or origin in (list,List):
         t = first(o for o in get_args(t) if o!=type(None))
-    d = {bool: str2bool, int: str2int, date: str2date}
+    d = {bool: str2bool, int: str2int, date: str2date, UploadFile: noop}
     res = d.get(t, t)
     if origin in (list,List): return partial(_mk_list, res)
     return lambda o: res(o[-1]) if isinstance(o,(list,tuple)) else res(o)
@@ -167,6 +154,7 @@ async def _from_body(req, p):
     d = _annotations(anno)
     if req.headers.get('content-type', None)=='application/json': data = await req.json()
     else: data = form2dict(await parse_form(req))
+    if req.query_params: data = {**data, **dict(req.query_params)}
     cargs = {k: _form_arg(k, v, d) for k, v in data.items() if not d or k in d}
     return anno(**cargs)
 
@@ -303,6 +291,7 @@ class WS_RouteX(WebSocketRoute):
     def __init__(self, app, path:str, recv, conn:callable=None, disconn:callable=None, *,
                  name=None, middleware=None):
         super().__init__(path, _ws_endp(recv, conn, disconn), name=name, middleware=middleware)
+        self.methods = ['WS']
 
 # %% ../nbs/api/00_core.ipynb
 def uri(_arg, **kwargs):
@@ -453,14 +442,21 @@ class RouterX(Router):
         self._app = app
         super().__init__(routes, redirect_slashes, default, app.on_startup, app.on_shutdown,
                          lifespan=app.lifespan, middleware=middleware)
+    
+    def _add_route(self, route):
+        route.methods = [m.upper() for m in listify(route.methods)]
+        self.routes = [r for r in self.routes if not
+                       (r.path==route.path and r.name == route.name and
+                        ((route.methods is None) or (set(r.methods) == set(route.methods))))]
+        self.routes.append(route)
 
     def add_route(self, path: str, endpoint: callable, methods=None, name=None, include_in_schema=True):
         route = RouteX(self._app, path, endpoint=endpoint, methods=methods, name=name, include_in_schema=include_in_schema)
-        self.routes.append(route)
+        self._add_route(route)
 
     def add_ws(self, path: str, recv: callable, conn:callable=None, disconn:callable=None, name=None):
         route = WS_RouteX(self._app, path, recv=recv, conn=conn, disconn=disconn, name=name)
-        self.routes.append(route)
+        self._add_route(route)
 
 # %% ../nbs/api/00_core.ipynb
 htmxsrc   = Script(src="https://unpkg.com/htmx.org@next/dist/htmx.min.js")
@@ -502,6 +498,16 @@ def _mk_locfunc(f,p):
     return _lf()
 
 # %% ../nbs/api/00_core.ipynb
+def def_hdrs(htmx=True, ct_hdr=False, ws_hdr=False, surreal=True):
+    "Default headers for a FastHTML app"
+    hdrs = []
+    if surreal: hdrs = [surrsrc,scopesrc] + hdrs
+    if ws_hdr: hdrs = [htmxwssrc] + hdrs
+    if ct_hdr: hdrs = [htmxctsrc] + hdrs
+    if htmx: hdrs = [htmxsrc,fhjsscr] + hdrs
+    return [charset, viewport] + hdrs
+
+# %% ../nbs/api/00_core.ipynb
 class FastHTML(Starlette):
     def __init__(self, debug=False, routes=None, middleware=None, exception_handlers=None,
                  on_startup=None, on_shutdown=None, lifespan=None, hdrs=None, ftrs=None,
@@ -513,12 +519,7 @@ class FastHTML(Starlette):
         middleware,before,after = map(_list, (middleware,before,after))
         hdrs,ftrs = listify(hdrs),listify(ftrs)
         htmlkw = htmlkw or {}
-        if default_hdrs:
-            if surreal: hdrs = [surrsrc,scopesrc] + hdrs
-            if ws_hdr: hdrs = [htmxwssrc] + hdrs
-            if ct_hdr: hdrs = [htmxctsrc] + hdrs
-            if htmx: hdrs = [htmxsrc,fhjsscr] + hdrs
-            hdrs = [charset, viewport] + hdrs
+        if default_hdrs: hdrs = def_hdrs(htmx, ct_hdr=ct_hdr, ws_hdr=ws_hdr, surreal=surreal) + hdrs
         self.on_startup,self.on_shutdown,self.lifespan,self.hdrs,self.ftrs = on_startup,on_shutdown,lifespan,hdrs,ftrs
         self.before,self.after,self.htmlkw,self.bodykw = before,after,htmlkw,bodykw
         secret_key = get_key(secret_key, key_fname)
@@ -532,7 +533,7 @@ class FastHTML(Starlette):
             def _not_found(req, exc): return  Response('404 Not Found', status_code=404)  
             exception_handlers[404] = _not_found
         excs = {k:_wrap_ex(v, hdrs, ftrs, htmlkw, bodykw) for k,v in exception_handlers.items()}
-        super().__init__(debug, routes, middleware, excs, on_startup=on_startup, on_shutdown=on_shutdown, lifespan=lifespan)
+        super().__init__(debug, routes, middleware=middleware, exception_handlers=excs, on_startup=on_startup, on_shutdown=on_shutdown, lifespan=lifespan)
         self.router = RouterX(self, routes)
 
     def ws(self, path:str, conn=None, disconn=None, name=None):
@@ -551,9 +552,9 @@ def route(self:FastHTML, path:str=None, methods=None, name=None, include_in_sche
     pathstr = None if callable(path) else path
     def f(func):
         n,fn,p = name,func.__name__,pathstr
-        assert path or (fn not in all_meths), "Must provide a path when using http verb-based function name"
         if methods: m = [methods] if isinstance(methods,str) else methods
-        else: m = [fn] if fn in all_meths else ['get','post']
+        elif fn in all_meths and p is not None: m = [fn]
+        else: m = ['get','post']
         if not n: n = fn
         if not p: p = '/'+('' if fn=='index' else fn)
         self.router.add_route(p, func, methods=m, name=n, include_in_schema=include_in_schema)
