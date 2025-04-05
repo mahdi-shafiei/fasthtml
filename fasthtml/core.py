@@ -131,7 +131,7 @@ def _is_body(anno): return issubclass(anno, (dict,ns)) or _annotations(anno)
 # %% ../nbs/api/00_core.ipynb
 def _formitem(form, k):
     "Return single item `k` from `form` if len 1, otherwise return list"
-    if isinstance(form, dict): return form[k]
+    if isinstance(form, dict): return form.get(k)
     o = form.getlist(k)
     return o[0] if len(o) == 1 else o if o else None
 
@@ -436,19 +436,19 @@ async def _wrap_call(f, req, params):
 
 # %% ../nbs/api/00_core.ipynb
 htmx_exts = {
-    "head-support": "https://unpkg.com/htmx-ext-head-support@2.0.3/head-support.js",
-    "preload": "https://unpkg.com/htmx-ext-preload@2.1.0/preload.js",
-    "class-tools": "https://unpkg.com/htmx-ext-class-tools@2.0.1/class-tools.js",
-    "loading-states": "https://unpkg.com/htmx-ext-loading-states@2.0.0/loading-states.js",
-    "multi-swap": "https://unpkg.com/htmx-ext-multi-swap@2.0.0/multi-swap.js",
-    "path-deps": "https://unpkg.com/htmx-ext-path-deps@2.0.0/path-deps.js",
-    "remove-me": "https://unpkg.com/htmx-ext-remove-me@2.0.0/remove-me.js",
-    "ws": "https://unpkg.com/htmx-ext-ws@2.0.2/ws.js",
-    "chunked-transfer": "https://unpkg.com/htmx-ext-transfer-encoding-chunked@0.4.0/transfer-encoding-chunked.js"
+    "head-support": "https://cdn.jsdelivr.net/npm/htmx-ext-head-support@2.0.3/head-support.js",
+    "preload": "https://cdn.jsdelivr.net/npm/htmx-ext-preload@2.1.0/preload.js",
+    "class-tools": "https://cdn.jsdelivr.net/npm/htmx-ext-class-tools@2.0.1/class-tools.js",
+    "loading-states": "https://cdn.jsdelivr.net/npm/htmx-ext-loading-states@2.0.0/loading-states.js",
+    "multi-swap": "https://cdn.jsdelivr.net/npm/htmx-ext-multi-swap@2.0.0/multi-swap.js",
+    "path-deps": "https://cdn.jsdelivr.net/npm/htmx-ext-path-deps@2.0.0/path-deps.js",
+    "remove-me": "https://cdn.jsdelivr.net/npm/htmx-ext-remove-me@2.0.0/remove-me.js",
+    "ws": "https://cdn.jsdelivr.net/npm/htmx-ext-ws@2.0.2/ws.js",
+    "chunked-transfer": "https://cdn.jsdelivr.net/npm/htmx-ext-transfer-encoding-chunked@0.4.0/transfer-encoding-chunked.js"
 }
 
 # %% ../nbs/api/00_core.ipynb
-htmxsrc   = Script(src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js")
+htmxsrc   = Script(src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js")
 fhjsscr   = Script(src="https://cdn.jsdelivr.net/gh/answerdotai/fasthtml-js@1.0.12/fasthtml.js")
 surrsrc   = Script(src="https://cdn.jsdelivr.net/gh/answerdotai/surreal@main/surreal.js")
 scopesrc  = Script(src="https://cdn.jsdelivr.net/gh/gnat/css-scope-inline@main/script.js")
@@ -775,12 +775,13 @@ class MiddlewareBase:
 # %% ../nbs/api/00_core.ipynb
 class FtResponse:
     "Wrap an FT response with any Starlette `Response`"
-    def __init__(self, content, status_code:int=200, headers=None, cls=HTMLResponse, media_type:str|None=None):
+    def __init__(self, content, status_code:int=200, headers=None, cls=HTMLResponse, media_type:str|None=None, background: BackgroundTask | None = None):
         self.content,self.status_code,self.headers = content,status_code,headers
-        self.cls,self.media_type = cls,media_type
+        self.cls,self.media_type,self.background = cls,media_type,background
 
     def __response__(self, req):
         cts,httphdrs,tasks = _xt_cts(req, self.content)
+        if not tasks.tasks: tasks = self.background
         headers = {**(self.headers or {}), **httphdrs}
         return self.cls(cts, status_code=self.status_code, headers=headers, media_type=self.media_type, background=tasks)
 

@@ -2,6 +2,26 @@
 
 <!-- do not remove -->
 
+## 0.12.11
+
+### New Features
+
+- Add `Fragment` ([#706](https://github.com/AnswerDotAI/fasthtml/issues/706))
+
+
+## 0.12.9
+
+### New Features
+
+- Background tasks fix+docs ([#692](https://github.com/AnswerDotAI/fasthtml/pull/692)), thanks to [@pydanny](https://github.com/pydanny)
+- Move htmx and ext js to jsdelivr from unpkg ([#698](https://github.com/AnswerDotAI/fasthtml/issues/698))
+
+
+## 0.12.6
+
+- update `_formitem` so that it doesn't raise `KeyError` ([#694](https://github.com/AnswerDotAI/fasthtml/pull/694)), thanks to [@comhar](https://github.com/comhar)
+
+
 ## 0.12.5
 
 ### New Features
